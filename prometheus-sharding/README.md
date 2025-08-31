@@ -16,4 +16,6 @@ docker compose -f docker-compose.yaml build
 docker compose up -d
 ```
 
+Navigate to `localhost:9090` and `localhost:9091` to access both Prometheus instances. 
 Applications specific labels are in `__meta_dns_name`
+

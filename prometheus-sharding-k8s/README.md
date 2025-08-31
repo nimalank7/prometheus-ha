@@ -1,7 +1,4 @@
 # Prometheus Sharding in Kubernetes using Prometheus Operator
-
-Walkthrough covers manual and automatic sharding.
-
 ## Install the Prometheus Operator
 
 1. Setup a Kubernetes cluster
@@ -70,21 +67,6 @@ kubectl apply -f ../nodejs-application/deployment.yaml
 kubectl get pods
 ```
 
-## Sharding Strategies
-
-There are two main types of strategies to achieve sharding, Manual and Automated. </br>
-
-**Manual Sharding**
-
-Manual sharding is more robust, and you are in control. </br>
-It involves manually creating a `Prometheus` instance or "shard" and then setting `ServiceMonitors` per instance to scrape.
-
-**Automated Sharding**
-
-Automated sharding is an automated sharding strategy where Prometheus will use a hasmhmod technique to automatically select `ServiceMonitors` per shard to scrape.
-
---- 
-
 ## Create a service account
 
 Service account with RBAC permissions needs to be created to allow Prometheus instances to access service monitors and allow scraping of service endpoints:
@@ -122,16 +104,6 @@ kubectl port-forward prometheus-prometheus-01-0 9091:9090
 ```
 
 ### Automated Sharding
-
-In larger clusters, it can become toil to manually set sharding labels on `ServiceMonitor` resources and manually balancing `Prometheus` instances.
-
-The Prometheus-Operator supports automated sharding, which follows the technique outlined in our Sharding Introduction video. </br>
-
-The Prometheus-Operator will automate everything we learned (and performed in docker). </br>
-It will create a separate `StatefulSet` for each shard and use the `hashmod` technique, typically on the address field of the service endpoints.
-
-All we need to do is use the `spec.shards` field. </br>
-The operator will also set external labels for each replica or shard as `prometheus_replica` which you can view in the Prometheus configuration in the UI. </br>
 
 Ensure that the ServiceMonitors are applied.
 

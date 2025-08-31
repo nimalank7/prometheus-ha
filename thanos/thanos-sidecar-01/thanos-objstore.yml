@@ -1,0 +1,12 @@
+type: S3
+config:
+  # MinIO bucket name
+  bucket: "thanos-blocks"
+  # MinIO service name and port in docker-compose
+  endpoint: "minio:9000"
+  # MinIO doesn't care about region, but S3 requires it
+  region: "us-east-1"
+  access_key: "thanos"
+  secret_key: "supersecretpassword"
+  # Use insecure connection for MinIO (HTTP, not HTTPS)
+  insecure: truection for MinIO (HTTP, not HTTPS)

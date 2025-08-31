@@ -1,0 +1,194 @@
+networks:
+  prometheus:
+    name: prometheus
+    driver: bridge
+services:
+  go-application:
+    build:
+      context: ../go-application
+    container_name: go-application
+    image: go-application
+    ports:
+      - "80:5000"
+    networks:
+      - prometheus
+  python-application:
+    build:
+      context: ../python-application
+    container_name: python-application
+    image: python-application
+    ports:
+      - "81:5000"
+    networks:
+      - prometheus
+  dotnet-application:
+    build:
+      context: ../dotnet-application
+    container_name: dotnet-application
+    image: dotnet-application
+    ports:
+      - "82:5000"
+    networks:
+      - prometheus
+  nodejs-application:
+    build:
+      context: ../nodejs-application
+    container_name: nodejs-application
+    image: nodejs-application
+    ports:
+      - "83:5000"
+    networks:
+      - prometheus
+  prometheus-00:
+    container_name: prometheus-00
+    image: prom/prometheus:v3.3.0
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yaml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.external-url=http://prometheus-00:9090'
+      - '--web.route-prefix=/'
+      # Important for Thanos integration: disable internal Prometheus compaction
+      - '--storage.tsdb.min-block-duration=2h'
+      - '--storage.tsdb.max-block-duration=2h'
+    volumes:
+      - ./prometheus-00.yaml:/etc/prometheus/prometheus.yaml
+      - sharding_prometheus_00_data:/prometheus
+    networks:
+      - prometheus
+  prometheus-01:
+    container_name: prometheus-01
+    image: prom/prometheus:v3.3.0
+    ports:
+      - "9091:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yaml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.external-url=http://prometheus-01:9090'
+      - '--web.route-prefix=/'
+      # Important for Thanos integration: disable internal Prometheus compaction
+      - '--storage.tsdb.min-block-duration=2h'
+      - '--storage.tsdb.max-block-duration=2h'
+    volumes:
+      - ./prometheus-01.yaml:/etc/prometheus/prometheus.yaml
+      - sharding_prometheus_01_data:/prometheus
+    networks:
+      - prometheus
+  # Object Storage for Thanos (using MinIO for local testing)
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: minio
+    ports:
+      # MinIO console/API
+      - "9000:9000"
+      # MinIO console
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: thanos
+      MINIO_ROOT_PASSWORD: supersecretpassword
+    command: server /data --console-address ":9001"
+    networks:
+      - prometheus
+  minio-init:
+    image: minio/mc
+    container_name: minio-init
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5s &&
+      /usr/bin/mc alias set minio http://minio:9000 thanos supersecretpassword;
+      /usr/bin/mc mb minio/thanos-blocks --ignore-existing;
+      exit 0;
+      "
+    networks:
+      - prometheus
+  thanos-sidecar-00:
+    image: quay.io/thanos/thanos:v0.38.0
+    container_name: thanos-sidecar-00
+    user: "65534"
+    volumes:
+      # Mount Prometheus data
+      - sharding_prometheus_00_data:/prometheus
+      # Mount Thanos config
+      - ./thanos-sidecar-00:/etc/thanos
+    command:
+      - 'sidecar'
+      # Location of Prometheus data
+      - '--tsdb.path=/prometheus'
+      # Ties sidecar to Prometheus instance
+      - '--prometheus.url=http://prometheus-00:9090'
+      # Thanos configuration file
+      - '--objstore.config-file=/etc/thanos/thanos-objstore.yml'
+      # HTTP for metrics/status
+      - '--http-address=0.0.0.0:19090'
+      # gRPC for Thanos Query to connect
+      - '--grpc-address=0.0.0.0:19091'
+      - '--shipper.upload-compacted'
+    networks:
+      - prometheus
+    depends_on:
+      - minio
+  thanos-sidecar-01:
+    image: quay.io/thanos/thanos:v0.38.0
+    container_name: thanos-sidecar-01
+    user: "65534"
+    volumes:
+      # Mount Prometheus data
+      - sharding_prometheus_01_data:/prometheus
+      # Mount Thanos config
+      - ./thanos-sidecar-01:/etc/thanos
+    command:
+      - 'sidecar'
+      # Location of Prometheus data
+      - '--tsdb.path=/prometheus'
+      # Ties sidecar to Prometheus instance
+      - '--prometheus.url=http://prometheus-01:9090'
+      # Thanos configuration file
+      - '--objstore.config-file=/etc/thanos/thanos-objstore.yml'
+      # HTTP for metrics/status
+      - '--http-address=0.0.0.0:19090'
+      # gRPC for Thanos Query to connect
+      - '--grpc-address=0.0.0.0:19091'
+      - '--shipper.upload-compacted'
+    networks:
+      - prometheus
+    depends_on:
+      - minio
+  thanos-query:
+    image: quay.io/thanos/thanos:v0.38.0
+    container_name: thanos-query
+    ports:
+      - "19090:19090"
+    command:
+      - 'query'
+      # Grafana will connect here
+      - '--http-address=0.0.0.0:19090'
+      # gRPC address for query server
+      - '--grpc-address=0.0.0.0:19091'
+      # Connect to sidecar-00 by gRPC
+      - '--endpoint=thanos-sidecar-00:19091'
+      # Connect to sidecar-01 by gRPC
+      - '--endpoint=thanos-sidecar-01:19091'
+    networks:
+      - prometheus
+    depends_on:
+      - thanos-sidecar-00
+      - thanos-sidecar-01
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_AUTH_DISABLE_LOGIN_FORM: true
+      GF_AUTH_ANONYMOUS_ENABLED: true
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    networks:
+      - prometheus
+    depends_on:
+      - thanos-query
+volumes:
+  sharding_prometheus_00_data:
+  sharding_prometheus_01_data:

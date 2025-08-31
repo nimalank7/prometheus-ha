@@ -11,7 +11,8 @@ spec:
   nodeSelector:
     kubernetes.io/os: linux
   replicas: 1
-  retention: 2d # Thanos will now have long term storage
+  # Thanos will now have long term storage
+  retention: 2d
   scrapeInterval: 30s
   serviceAccountName: prometheus-applications
   serviceMonitorNamespaceSelector:
@@ -22,6 +23,7 @@ spec:
       prometheus-shard: prometheus-01
   shards: 1
   version: v3.4.1
+  # ExternalLabels to identify Prometheus instances
   externalLabels:
     prometheus: applications
     prometheus-shard: prometheus-01

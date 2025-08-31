@@ -7,7 +7,8 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 1Gi # Storage size for MinIO data
+      # Storage size for MinIO data
+      storage: 1Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -29,7 +30,8 @@ spec:
         - name: minio
           image: quay.io/minio/minio:latest
           imagePullPolicy: IfNotPresent
-          command: ["minio", "server", "/data", "--console-address", ":9001"] # MinIO server command
+          # MinIO server command
+          command: ["minio", "server", "/data", "--console-address", ":9001"]
           ports:
             - name: http-api
               containerPort: 9000
