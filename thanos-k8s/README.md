@@ -26,18 +26,6 @@ kubectl -n monitoring get pods
 kubectl -n monitoring get servicemonitors
 ```
 
-4. Access Prometheus on `localhost:9090`
-
-```
-kubectl -n monitoring port-forward svc/prometheus-operated 9090
-```
-
-5. Access Grafana on `localhost:3000`
-
-```
-kubectl -n monitoring port-forward svc/grafana 3000:80
-```
-
 ## Run the applications
 
 1. Build the applications using docker compose
@@ -111,6 +99,8 @@ and the other two will be scraped by `prometheus-01`.
 kubectl apply -f servicemonitors.yaml
 ```
 
+### Access Prometheus instances
+
 Port-forward to our Prometheus instances and see the scraped targets respectively
 
 ```
@@ -134,7 +124,7 @@ Deploy the query service:
 kubectl apply -f thanos-query.yaml
 ```
 
-## Test in Grafana
+### Test in Grafana
 
 We can now verify that we can query Thanos in Grafana by using `port-forward` to access Grafana.
 

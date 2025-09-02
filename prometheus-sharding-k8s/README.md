@@ -26,20 +26,6 @@ kubectl -n monitoring get pods
 kubectl -n monitoring get servicemonitors
 ```
 
-Default Prometheus
-
-4. Access Prometheus on `localhost:9090`
-
-```
-kubectl -n monitoring port-forward svc/prometheus-operated 9090
-```
-
-5. Access Grafana on `localhost:3000`
-
-```
-kubectl -n monitoring port-forward svc/grafana 3000:80
-```
-
 ## Run the applications
 
 1. Build the applications using docker compose
@@ -86,7 +72,7 @@ kubectl apply -f prometheus-man-01.yaml
 
 Use `kubectl get pods` and `kubectl get prometheus` to see the Prometheus instances in the `default` namespace.
 
-### Apply Service Monitors
+#### Apply Service Monitors
 
 There are 4 ServiceMonitor which correspond to our applications respectively. Each ServiceMonitor has an extra label 
 called `prometheus-shard` which indicates which Prometheus instance should scrape it. Two service monitors will be scraped by instance `prometheus-00` 
@@ -95,6 +81,8 @@ and the other two will be scraped by `prometheus-01`.
 ```
 kubectl apply -f servicemonitors.yaml
 ```
+
+#### Access Prometheus instances
 
 Port-forward to our Prometheus instances and see the scraped targets respectively
 
@@ -112,6 +100,8 @@ Apply our sharded `Prometheus` instance:
 ```
 kubectl apply -f prometheus-auto.yaml
 ```
+
+#### Access Prometheus instances
 
 Checkout each of the automated Prometheus shards
 

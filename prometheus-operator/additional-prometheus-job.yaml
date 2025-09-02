@@ -1,0 +1,3 @@
+\- job\_name: "catalogue"
+  static\_configs:
+    - targets: \["catalogue.sock-shop"\]

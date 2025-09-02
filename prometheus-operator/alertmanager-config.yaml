@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: alertmanagerconfig
+  labels:
+    alertmanagerConfig: alertmanagerconfig
+spec:
+  route:
+    groupBy: ['alertname']
+    groupWait: 30s
+    groupInterval: 5m
+    repeatInterval: 12h
+    routes:
+    receiver: 'webhook'
+  receivers:
+    - name: 'webhook'
+      webhookConfigs:
+        - url: 'http://example.com/'

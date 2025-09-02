@@ -4,9 +4,10 @@ These examples are all drawn from https://github.com/marcel-dempers/docker-devel
 
 ## Examples
 
-1. prometheus-sharding
-2. prometheus-sharding-k8s
-3. thanos
-4. thanos-k8s
+1. Prometheus Operator
+2. Prometheus Sharding
+2. Prometheus Sharding in Kubernetes
+3. Thanos
+4. Thanos in Kubernetes
 
 `dotnet-application`, `go-application`, `nodejs-application`, `python-application` are used for all examples.

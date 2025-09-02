@@ -1,7 +1,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: Prometheus
 metadata:
-  name: prometheus-01
+  name: prometheus
 spec:
   evaluationInterval: 30s
   image: quay.io/prometheus/prometheus:v3.4.1
@@ -19,8 +19,19 @@ spec:
       kubernetes.io/metadata.name: default
   serviceMonitorSelector:
     matchLabels:
-      # Only match ServiceMonitors that have the prometheus-shard: prometheus-01 label
-      prometheus-shard: prometheus-01
-  # Set this to 1 for manual sharding
+      # Only match ServiceMonitors that have the monitoring: prometheus-applications label
+      monitoring: prometheus-applications
+  # References the `additional-scrape-configs` secret
+  additionalScrapeConfigs:
+    name: additional-scrape-configs
+    key: additional-prometheus-job.yaml
   shards: 1
+  alerting:
+    alertmanagers:
+      # Match on the endpoint object
+      - name: alertmanager-operated
+        port: web
+  ruleSelector:
+    matchLabels:
+      role: alert-rules
   version: v3.4.1
